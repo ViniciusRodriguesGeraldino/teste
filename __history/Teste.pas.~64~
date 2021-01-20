@@ -1,0 +1,215 @@
+unit Teste;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Buttons, Vcl.StdCtrls, dtmBanco,
+  Vcl.Grids, Vcl.DBGrids, Vcl.ExtCtrls, Datasnap.DBClient, uPedidos, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef, FireDAC.Comp.Client, FireDAC.Stan.Param,
+  FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Phys.SQLiteVDataSet, FireDAC.VCLUI.Wait,
+  Vcl.Mask;
+
+type
+  TPedidos = class(TForm)
+    Panel1: TPanel;
+    Panel2: TPanel;
+    Panel4: TPanel;
+    edtPed: TEdit;
+    Label1: TLabel;
+    Label2: TLabel;
+    edtCliente: TEdit;
+    lblCliente: TLabel;
+    DBGrid1: TDBGrid;
+    GroupBox1: TGroupBox;
+    SpeedButton1: TSpeedButton;
+    edtValor: TEdit;
+    Label5: TLabel;
+    edtQtd: TEdit;
+    Label4: TLabel;
+    edtProduto: TEdit;
+    Label3: TLabel;
+    SpeedButton2: TSpeedButton;
+    lblTotal: TLabel;
+    ClientDataSet1: TClientDataSet;
+    DataSource1: TDataSource;
+    ClientDataSet1CODIGOPRODUTO: TStringField;
+    ClientDataSet1DESCRICAO: TStringField;
+    ClientDataSet1QUANTIDADE: TFloatField;
+    ClientDataSet1VALORUNITARIO: TFloatField;
+    ClientDataSet1VALORTOTAL: TFloatField;
+    lbl1: TLabel;
+    edtDataEmissao: TMaskEdit;
+    lblProd: TLabel;
+    procedure FormCreate(Sender: TObject);
+    procedure edtPedExit(Sender: TObject);
+    procedure edtClienteExit(Sender: TObject);
+    procedure edtProdutoKeyPress(Sender: TObject; var Key: Char);
+    procedure DBGrid1KeyPress(Sender: TObject; var Key: Char);
+    procedure SpeedButton1Click(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure edtProdutoExit(Sender: TObject);
+    procedure SpeedButton2Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    procedure LimpaForm;
+  end;
+
+var
+  Pedidos: TPedidos;
+  lAtualizando : Boolean;
+  linha : Integer;
+
+
+implementation
+
+{$R *.dfm}
+
+procedure TPedidos.DBGrid1KeyPress(Sender: TObject; var Key: Char);
+begin
+  if (DBGrid1.SelectedField.FieldName = 'PRODUTO') and ((Key = #13) or (key = #09) or (key = #28 )) then
+  begin
+    lAtualizando := True;
+    linha := ClientDataSet1.RecNo;
+
+    edtProduto.Text := ClientDataSet1CODIGOPRODUTO.AsString;
+    edtQtd.Text := ClientDataSet1QUANTIDADE.AsString;
+    edtValor.Text := ClientDataSet1VALORUNITARIO.AsString;
+
+  end;
+end;
+
+procedure TPedidos.edtClienteExit(Sender: TObject);
+begin
+  //Busca Cliente
+  if Trim(edtCliente.Text) = '' then
+    Exit;
+
+  lblCliente.Caption := pedClass.getDescricaoCliente(edtCliente.Text);
+
+end;
+
+procedure TPedidos.edtPedExit(Sender: TObject);
+var
+  sqlQuery : TFDQuery;
+begin
+  //Busca Pedido
+
+  if Trim(edtPed.Text) = '' then
+    Exit;
+
+  if dtmMysql.sqlPed.Locate('ID', edtPed.Text, []) then
+  begin
+    edtDataEmissao.Text := DateToStr(StrToDateDef(dtmMysql.sqlPed.FieldByName('DATA_EMISSAO').AsString, Now));
+    edtCliente.Text := dtmMysql.sqlPed.FieldByName('CLIENTE').AsString;
+    lblCliente.Caption := pedClass.getDescricaoCliente(edtCliente.Text);
+    lblTotal.Caption := FormatFloat('#,##0.00', dtmMysql.sqlPed.FieldByName('TOTAL').AsFloat)
+  end
+  else
+    edtPed.Text := '';
+
+  sqlQuery := pedClass.getItensPedido(edtPed.Text);
+
+  ClientDataSet1.First;
+  while not ClientDataSet1.Eof do
+    ClientDataSet1.Delete;
+
+  while not sqlQuery.Eof do
+  begin
+    ClientDataSet1.Append;
+
+    ClientDataSet1CODIGOPRODUTO.AsString := sqlQuery.FieldByName('CODIGOPRODUTO').AsString;
+    ClientDataSet1DESCRICAO.AsString     := sqlQuery.FieldByName('DESCRICAO').AsString;
+    ClientDataSet1QUANTIDADE.AsString    := sqlQuery.FieldByName('QUANTIDADE').AsString;
+    ClientDataSet1VALORUNITARIO.AsString := sqlQuery.FieldByName('VALORUNITARIO').AsString;
+    ClientDataSet1VALORTOTAL.AsString    := sqlQuery.FieldByName('VALORTOTAL').AsString;
+
+    ClientDataSet1.Post;
+
+    sqlQuery.Next;
+  end;
+
+end;
+
+procedure TPedidos.edtProdutoExit(Sender: TObject);
+begin
+  if Trim(edtProduto.Text) = '' then
+    Exit;
+
+  lblProd.Caption := pedClass.getDescricaoProduto(edtProduto.Text);
+
+end;
+
+procedure TPedidos.edtProdutoKeyPress(Sender: TObject; var Key: Char);
+begin
+//
+end;
+
+procedure TPedidos.FormActivate(Sender: TObject);
+begin
+  dtmMysql.sqlPed.Open();
+  dtmMysql.sqlPedItens.Open();
+  application.ExeName
+end;
+
+procedure TPedidos.FormCreate(Sender: TObject);
+begin
+  ClientDataSet1.CreateDataSet;
+  lblCliente.Caption := '';
+  lblTotal.Caption := 'Total:';
+end;
+
+procedure TPedidos.LimpaForm;
+begin
+  edtPed.Text := '';
+  edtCliente.Text := '';
+  edtProduto.Text := '';
+  edtQtd.Text := '';
+  edtValor.Text := '';
+  edtDataEmissao.Text := '';
+  lblTotal.Caption := 'Total:';
+
+  ClientDataSet1.First;
+  while not ClientDataSet1.Eof do
+    ClientDataSet1.Delete;
+end;
+
+procedure TPedidos.SpeedButton1Click(Sender: TObject);
+var
+  registro : TBookmark;
+begin
+  //adiciona o produto no grid
+  if Trim(edtProduto.Text) = '' then
+    raise Exception.Create('Código do Produto inválido.');
+
+  if lAtualizando then
+  begin
+    ClientDataSet1.First;
+    ClientDataSet1.MoveBy(linha);
+    ClientDataSet1.Edit;
+    lAtualizando := false;
+  end
+  else
+    ClientDataSet1.Append;
+
+  ClientDataSet1CODIGOPRODUTO.AsString := edtProduto.Text;
+  ClientDataSet1QUANTIDADE.AsString    := edtQtd.Text;
+  ClientDataSet1VALORUNITARIO.AsString := edtValor.Text;
+  ClientDataSet1VALORTOTAL.AsFloat     := ClientDataSet1VALORUNITARIO.AsFloat * ClientDataSet1QUANTIDADE.AsFloat;
+  ClientDataSet1DESCRICAO.AsString     := pedClass.getDescricaoProduto(ClientDataSet1CODIGOPRODUTO.AsString);
+
+  ClientDataSet1.Post;
+
+
+
+
+end;
+
+procedure TPedidos.SpeedButton2Click(Sender: TObject);
+begin
+  pedClass.Salva(edtPed.Text, edtDataEmissao.Text, edtCliente.Text, StrToCurrDef(lblTotal.Caption, 0), ClientDataSet1);
+end;
+
+end.

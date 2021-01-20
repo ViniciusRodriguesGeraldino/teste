@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2021/01/06 21:22:29.000.454,=C:\Users\User\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2021/01/06 22:17:13.000.083,C:\Users\User\Documents\Embarcadero\Studio\Projects\Unit1.pas=C:\Users\User\Documents\Embarcadero\Studio\Projects\Teste\Teste.pas</Transaction>
+    <Transaction>2021/01/06 22:17:13.000.083,C:\Users\User\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\Users\User\Documents\Embarcadero\Studio\Projects\Teste\Teste.dfm</Transaction>
+    <Transaction>2021/01/06 22:49:21.000.283,C:\Users\User\Documents\Embarcadero\Studio\Projects\Project1.dproj=C:\Users\User\Documents\Embarcadero\Studio\Projects\Teste\Project1.dproj</Transaction>
+    <Transaction>2021/01/07 09:44:41.000.338,=C:\Users\desenvolvimento\Desktop\Teste\Unit1.pas</Transaction>
+    <Transaction>2021/01/07 09:46:43.000.101,C:\Users\desenvolvimento\Desktop\Teste\uPedidos.pas=C:\Users\desenvolvimento\Desktop\Teste\Unit1.pas</Transaction>
+    <Transaction>2021/01/07 10:21:41.000.483,=C:\Users\desenvolvimento\Desktop\Teste\Unit1.pas</Transaction>
+    <Transaction>2021/01/07 10:22:37.000.583,C:\Users\desenvolvimento\Desktop\Teste\dtmBanco.pas=C:\Users\desenvolvimento\Desktop\Teste\Unit1.pas</Transaction>
+    <Transaction>2021/01/07 10:22:37.000.583,C:\Users\desenvolvimento\Desktop\Teste\dtmBanco.dfm=C:\Users\desenvolvimento\Desktop\Teste\Unit1.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

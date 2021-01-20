@@ -1,0 +1,77 @@
+create table clientes (
+id int(11) not null auto_increment,
+nome varchar(255) not null,
+cidade varchar(255) not null,
+uf varchar(2) not null,
+PRIMARY KEY (id)
+);
+
+insert into clientes (nome, cidade, uf) values ('Cliente1', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente3', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente4', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente5', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente6', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente7', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente8', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente9', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente10', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente11', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente12', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente13', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente14', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente15', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente16', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente17', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente18', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente19', 'Londrina', 'PR');
+insert into clientes (nome, cidade, uf) values ('Cliente20', 'Londrina', 'PR');
+
+create table produtos (
+id int(11) not null auto_increment,
+codigo varchar(60) not null,
+descricao varchar(255) not null,
+valor numeric(13,2) not null,
+PRIMARY KEY (id)
+);
+
+insert into produtos (codigo, descricao, valor) values ('cod1', 'teste1', 10.00);
+insert into produtos (codigo, descricao, valor) values ('cod2', 'teste2', 15.00);
+insert into produtos (codigo, descricao, valor) values ('cod3', 'teste3', 10.50);
+insert into produtos (codigo, descricao, valor) values ('cod4', 'teste4', 10.10);
+insert into produtos (codigo, descricao, valor) values ('cod5', 'teste5', 20.00);
+insert into produtos (codigo, descricao, valor) values ('cod6', 'teste6', 35.90);
+insert into produtos (codigo, descricao, valor) values ('cod7', 'teste7', 14.00);
+insert into produtos (codigo, descricao, valor) values ('cod8', 'teste8', 1.00);
+insert into produtos (codigo, descricao, valor) values ('cod9', 'teste9', 2.50);
+insert into produtos (codigo, descricao, valor) values ('cod10', 'teste10', 3.00);
+insert into produtos (codigo, descricao, valor) values ('cod11', 'teste11', 99.00);
+insert into produtos (codigo, descricao, valor) values ('cod12', 'teste12', 100.00);
+insert into produtos (codigo, descricao, valor) values ('cod13', 'teste13', 10000.00);
+insert into produtos (codigo, descricao, valor) values ('cod14', 'teste14', 1034.00);
+insert into produtos (codigo, descricao, valor) values ('cod15', 'teste15', 100.60);
+insert into produtos (codigo, descricao, valor) values ('cod16', 'teste16', 111.00);
+insert into produtos (codigo, descricao, valor) values ('cod17', 'teste17', 222.00);
+insert into produtos (codigo, descricao, valor) values ('cod18', 'teste18', 333.00);
+insert into produtos (codigo, descricao, valor) values ('cod19', 'teste19', 444.00);
+insert into produtos (codigo, descricao, valor) values ('cod20', 'teste20', 555.00);
+
+create table pedidos (
+id int(11) not null auto_increment,
+data_emissao datetime not null,
+cliente int(11) not null,
+total numeric(13,2) not null,
+PRIMARY KEY (id),
+CONSTRAINT fkcliente FOREIGN KEY (cliente) REFERENCES clientes (id)
+)
+
+create table itenspedidos (
+id int(11) not null auto_increment,
+id_pedido int(11) not null,
+codigoproduto varchar(60) not null,
+quantidade numeric(13,2) not null,
+valorunitario numeric(13,2) not null,
+valortotal numeric(13,2) not null,
+PRIMARY KEY (id),
+CONSTRAINT fkpedido FOREIGN KEY (id_pedido) REFERENCES pedidos (id)
+)

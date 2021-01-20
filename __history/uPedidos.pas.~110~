@@ -1,0 +1,180 @@
+unit uPedidos;
+
+interface
+
+uses FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+     FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef, FireDAC.Comp.Client, FireDAC.Stan.Param,
+     FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Phys.SQLiteVDataSet, FireDAC.VCLUI.Wait, dtmBanco, Datasnap.DBClient,
+     SysUtils;
+
+type
+  TPedidosClass = class
+  private
+
+  public
+    procedure Salva(numero, emissao, cliente : string; total : Double; tblPedItens : TClientDataSet);
+    function getDescricaoProduto(codigo : string) : string;
+    function getDescricaoCliente(codigo : string) : string;
+    function getItensPedido(numero : string) : TFDQuery;
+
+  end;
+
+var
+  pedClass : TPedidosClass;
+
+implementation
+
+{ TPedidos }
+
+function TPedidosClass.getDescricaoCliente(codigo: string): string;
+var
+  sqlQuery : TFDQuery;
+begin
+
+  sqlQuery := TFDQuery.Create(nil);
+  sqlQuery.Connection := dtmMysql.cnt1;
+  sqlQuery.SQL.Text := 'SELECT NOME FROM CLIENTES WHERE ID = :id';
+  sqlQuery.ParamByName('id').AsString := codigo;
+  sqlQuery.Open;
+
+  Result := sqlQuery.FieldByName('NOME').AsString;
+
+  sqlQuery.Free;
+
+end;
+
+function TPedidosClass.getDescricaoProduto(codigo: string): string;
+var
+  sqlQuery : TFDQuery;
+begin
+
+  sqlQuery := TFDQuery.Create(nil);
+  sqlQuery.Connection := dtmMysql.cnt1;
+  sqlQuery.SQL.Text := 'SELECT DESCRICAO FROM PRODUTOS WHERE CODIGO = :id';
+  sqlQuery.ParamByName('id').AsString := codigo;
+  sqlQuery.Open;
+
+  if sqlQuery.FieldByName('DESCRICAO').AsString = '' then
+  begin
+    sqlQuery.Close;
+    sqlQuery.SQL.Text := 'SELECT DESCRICAO FROM PRODUTOS WHERE ID = :id';
+    sqlQuery.ParamByName('id').AsString := codigo;
+    sqlQuery.Open;
+  end;
+
+  Result := sqlQuery.FieldByName('DESCRICAO').AsString;
+
+  if sqlQuery.FieldByName('DESCRICAO').AsString = '' then
+    Result := 'Produto não encontrado';
+
+  sqlQuery.Free;
+
+end;
+
+function TPedidosClass.getItensPedido(numero: string): TFDQuery;
+var
+  sqlQuery : TFDQuery;
+begin
+  sqlQuery := TFDQuery.Create(nil);
+  sqlQuery.Connection := dtmMysql.cnt1;
+  sqlQuery.SQL.Text := 'SELECT * FROM ITENSPEDIDOS WHERE ID_PEDIDO = :id';
+  sqlQuery.ParamByName('id').AsString := numero;
+  sqlQuery.Open;
+
+  Result := sqlQuery;
+end;
+
+procedure TPedidosClass.Salva(numero, emissao, cliente : string; total : Double; tblPedItens : TClientDataSet);
+var
+  sqlQuery : TFDQuery;
+  sql : string;
+begin
+
+  if tblPedItens.RecordCount = 0 then
+    raise Exception.Create('Não há itens para gravar.');
+
+  sqlQuery := TFDQuery.Create(nil);
+  sqlQuery.Connection := dtmMysql.cnt1;
+
+  dtmMysql.sqlPed.Close;
+  dtmMysql.sqlPed.Open;
+
+  if not dtmMysql.cnt1.InTransaction then
+   dtmMysql.cnt1.StartTransaction;
+
+  try
+
+    if (numero <> '') and (dtmMysql.sqlPed.Locate('ID', numero, [])) then
+      dtmMysql.sqlPed.Edit
+    else
+      dtmMysql.sqlPed.Insert;
+
+    dtmMysql.sqlPed.FieldByName('DATA_EMISSAO').AsString  := emissao;
+    dtmMysql.sqlPed.FieldByName('CLIENTE').AsString       := cliente;
+    dtmMysql.sqlPed.FieldByName('TOTAL').AsFloat          := total;
+
+    dtmMysql.sqlPed.Post;
+    dtmMysql.sqlPed.ApplyUpdates(0);
+
+    if dtmMysql.cnt1.InTransaction then
+      dtmMysql.cnt1.Commit;
+
+  except
+    dtmMysql.cnt1.Rollback;
+  end;
+
+
+  //Itens
+  if not dtmMysql.cnt1.InTransaction then
+   dtmMysql.cnt1.StartTransaction;
+
+  try
+    sqlQuery.SQL.Text := 'DELETE FROM ITENSPEDIDOS WHERE ID_PEDIDO = :id';
+    sqlQuery.ParamByName('id').AsString := dtmMysql.sqlPed.FieldByName('ID').AsString;
+    sqlQuery.ExecSQL;
+
+    if dtmMysql.cnt1.InTransaction then
+      dtmMysql.cnt1.Commit;
+
+  except
+    dtmMysql.cnt1.Rollback;
+  end;
+
+  dtmMysql.sqlPedItens.Close;
+  dtmMysql.sqlPedItens.Open;
+
+  if not dtmMysql.cnt1.InTransaction then
+   dtmMysql.cnt1.StartTransaction;
+
+  try
+    tblPedItens.First;
+    while not tblPedItens.Eof do
+    begin
+      dtmMysql.sqlPedItens.Insert;
+
+      dtmMysql.sqlPedItens.FieldByName('ID_PEDIDO').AsString      := dtmMysql.sqlPed.FieldByName('ID').AsString;
+      dtmMysql.sqlPedItens.FieldByName('CODIGOPRODUTO').AsString  := tblPedItens.FieldByName('CODIGOPRODUTO').AsString;
+      dtmMysql.sqlPedItens.FieldByName('QUANTIDADE').AsString     := tblPedItens.FieldByName('QUANTIDADE').AsString;
+      dtmMysql.sqlPedItens.FieldByName('VALORUNITARIO').AsString  := tblPedItens.FieldByName('VALORUNITARIO').AsString;
+      dtmMysql.sqlPedItens.FieldByName('VALORTOTAL').AsString     := tblPedItens.FieldByName('VALORTOTAL').AsString;
+
+      dtmMysql.sqlPedItens.Post;
+      dtmMysql.sqlPedItens.ApplyUpdates(0);
+
+      tblPedItens.Next;
+    end;
+
+    if dtmMysql.cnt1.InTransaction then
+      dtmMysql.cnt1.Commit;
+
+  except
+    dtmMysql.cnt1.Rollback;
+  end;
+
+  sqlQuery.Free;
+
+end;
+
+
+
+end.
